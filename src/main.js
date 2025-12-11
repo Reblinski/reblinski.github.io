@@ -1,38 +1,46 @@
 import { Application, Assets, Sprite } from "pixi.js";
-import { Scroller } from "./scroller"
+import { Scroller } from "./scroller";
+import { BackgroundManager } from "./background";
 
 (async () => {
-  // Create a new application
+  // 1. Inicjalizacja aplikacji
   const app = new Application();
-
-  // Initialize the application
   await app.init({ background: "#1099bb", resizeTo: window });
-
-  // Append the application canvas to the document body
   document.getElementById("pixi-container").appendChild(app.canvas);
 
-  // Load the bunny texture
+  // 2. Konfiguracja Background Managera
+  // Zakładamy, że pliki są w: /public/assets/backgrounds/
+  // I nazywają się: tlo_001.png, tlo_002.png itd.
+  const bgManager = new BackgroundManager(app, "backgrounds", "tlo", {
+      onStartChange: () => {
+          // Tutaj możesz np. wyłączyć przyciski na chwilę
+          console.log("--> Rozpoczynam zmianę tła");
+      },
+      onFinishChange: (idx) => {
+          console.log(`--> Wyświetlono tło nr ${idx + 1}`);
+      }
+  });
+
+  // 3. SKANOWANIE KATALOGU (To jest ten kluczowy moment)
+  // Czekamy, aż manager sprawdzi, ile plików istnieje na serwerze
+  await bgManager.initAutoDetect();
+
+  // 4. Tworzymy Scroller dopiero gdy tła są gotowe
+  const scroller = new Scroller(app, {
+      onPrevClick: () => bgManager.move(-1),
+      onNextClick: () => bgManager.move(1)
+  });
+
+  // --- Elementy dodatkowe (Bunny) ---
   const texture = await Assets.load("/assets/bunny.png");
-
-  // Create a bunny Sprite
   const bunny = new Sprite(texture);
-
-  // Center the sprite's anchor point
   bunny.anchor.set(0.5);
-
-  // Move the sprite to the center of the screen
   bunny.position.set(app.screen.width / 2, app.screen.height / 2);
-
-  // Add the bunny to the stage
+  bunny.zIndex = 10; // Ważne: królik nad tłem
   app.stage.addChild(bunny);
 
-  const scroller = new Scroller(app);
-
-  // Listen for animate update
   app.ticker.add((time) => {
-    // Just for fun, let's rotate mr rabbit a little.
-    // * Delta is 1 if running at 100% performance *
-    // * Creates frame-independent transformation *
     bunny.rotation += 0.1 * time.deltaTime;
   });
+
 })();
