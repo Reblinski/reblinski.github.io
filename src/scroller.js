@@ -44,5 +44,30 @@ export class Scroller {
         this.container.addChild(this.spritePrev, this.spriteNext);
         this.container.zIndex = 1000;
         this.app.stage.sortableChildren = true;
+
+        // Ustaw pozycję po raz pierwszy
+        this.resize();
+
+        // 2. Nasłuchuj zmiany rozmiaru okna przeglądarki
+        // Używamy arrow function () => this.resize(), aby zachować 'this'
+        window.addEventListener('resize', () => this.resize());
+    }
+
+    /**
+     * Metoda przeliczająca pozycję przycisków względem aktualnego rozmiaru ekranu
+     */
+    resize() {
+        // Zabezpieczenie: jeśli metoda wywoła się zanim sprity się załadują
+        if (!this.spritePrev || !this.spriteNext) return;
+
+        const margin = 50;
+        const centerY = this.app.screen.height / 2;
+        const screenWidth = this.app.screen.width;
+
+        // Lewy przycisk
+        this.spritePrev.position.set(margin, centerY);
+
+        // Prawy przycisk (szerokość ekranu minus margines)
+        this.spriteNext.position.set(screenWidth - margin, centerY);
     }
 }
