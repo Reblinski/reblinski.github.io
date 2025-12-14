@@ -1,9 +1,9 @@
 {
   "backgrounds": {
     "folder": "backgrounds",
-    "prefix": "tlo",
+    "prefix": "bcgdn",
     "extension": "png",
-    "count": 5
+    "count": 18
   },
   "ui": {
     "scrollerPrev": "prev.png",

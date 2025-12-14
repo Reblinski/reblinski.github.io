@@ -1,14 +1,21 @@
 import { Sprite, Assets } from "pixi.js";
 
 export class BackgroundManager {
-    constructor(app, folder, prefix, callbacks = {}) {
+    /**
+     * @param {Object} app - Aplikacja Pixi
+     * @param {Object} config - Obiekt konfiguracyjny (sekcja 'backgrounds' z JSONa)
+     * @param {Object} callbacks - Funkcje zwrotne
+     */
+    constructor(app, config, callbacks = {}) {
         this.app = app;
-        this.folder = folder;
-        this.prefix = prefix;
 
-        this.totalImages = 0;
+        // Rozpakowujemy konfigurację do zmiennych w klasie
+        this.folder = config.folder;      // np. "backgrounds"
+        this.prefix = config.prefix;      // np. "tlo"
+        this.extension = config.extension;// np. "png"
+        this.totalImages = config.count;  // np. 5
+
         this.currentIndex = 0;
-        this.isReady = false;
 
         this.onStartChange = callbacks.onStartChange || (() => {});
         this.onFinishChange = callbacks.onFinishChange || (() => {});
@@ -19,71 +26,29 @@ export class BackgroundManager {
         this.sprite.zIndex = 0;
         this.app.stage.addChild(this.sprite);
 
+        // Od razu ładujemy pierwszy obrazek (bo wiemy z configu, że istnieje)
+        this.loadImage(0);
+
         window.addEventListener('resize', () => this.resize());
     }
 
     /**
-     * ZABEZPIECZONA wersja skanowania folderu.
+     * Buduje ścieżkę na podstawie CONFIGU.
+     * Wzór: assets/{folder}/{prefix}_{00X}.{ext}
      */
-    async initAutoDetect() {
-        console.log(`[BackgroundManager] Rozpoczynam skanowanie folderu: ${this.folder}...`);
-
-        let count = 0;
-        let searching = true;
-        const MAX_LIMIT = 50; // BEZPIECZNIK: Maksymalna liczba plików do sprawdzenia
-
-        while (searching) {
-            // Zabezpieczenie przed nieskończoną pętlą (hard limit)
-            if (count >= MAX_LIMIT) {
-                console.warn(`[BackgroundManager] Osiągnięto limit ${MAX_LIMIT} plików. Przerywam skanowanie.`);
-                searching = false;
-                break;
-            }
-
-            const path = this.getPathForIndex(count);
-            console.log(`[BackgroundManager] Plik: ${path}`);
-
-            try {
-                const response = await fetch(path, { method: 'HEAD' });
-
-                // Pobieramy typ zawartości z nagłówka
-                const contentType = response.headers.get("content-type");
-
-                // WARUNEK ROZSZERZONY:
-                // 1. response.ok (kod 200-299)
-                // 2. contentType istnieje
-                // 3. contentType zaczyna się od "image" (np. image/png, image/jpeg)
-                if (response.ok && contentType && contentType.startsWith("image")) {
-                    count++;
-                } else {
-                    // Jeśli to nie jest obrazek (np. html) lub błąd 404 -> koniec
-                    searching = false;
-                }
-            } catch (err) {
-                searching = false;
-            }
-        }
-
-        this.totalImages = count;
-        console.log(`[BackgroundManager] Zakończono skanowanie. Znaleziono obrazów: ${this.totalImages}`);
-
-        if (this.totalImages > 0) {
-            this.isReady = true;
-            await this.loadImage(0);
-        } else {
-            console.warn("[BackgroundManager] Brak plików graficznych w folderze lub błędna nazwa!");
-        }
-    }
-
     getPathForIndex(index) {
         const fileNumber = index + 1;
         const formattedNumber = fileNumber.toString().padStart(3, '0');
-        // return `/assets/${this.folder}/${this.prefix}_${formattedNumber}.png`;
-        return `/assets/${this.folder}/${this.prefix}${formattedNumber}.png`;
+
+        // Budujemy nazwę, np.: "tlo_001.png"
+        // Jeśli prefix jest pusty, będzie "_001.png" (można to dopracować, ale załóżmy że prefix jest)
+        const fileName = `${this.prefix}${formattedNumber}.${this.extension}`;
+
+        return `/assets/${this.folder}/${fileName}`;
     }
 
     async move(direction) {
-        if (!this.isReady || this.totalImages === 0) return;
+        if (this.totalImages === 0) return;
 
         this.onStartChange();
 
@@ -108,7 +73,7 @@ export class BackgroundManager {
             this.resize();
             this.onFinishChange(this.currentIndex);
         } catch (err) {
-            console.error(`Błąd ładowania tekstury: ${fullPath}`, err);
+            console.error(`Nie udało się załadować pliku z configu: ${fullPath}`, err);
         }
     }
 
