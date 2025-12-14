@@ -41,6 +41,7 @@ export class BackgroundManager {
             }
 
             const path = this.getPathForIndex(count);
+            console.log(`[BackgroundManager] Plik: ${path}`);
 
             try {
                 const response = await fetch(path, { method: 'HEAD' });
@@ -77,7 +78,8 @@ export class BackgroundManager {
     getPathForIndex(index) {
         const fileNumber = index + 1;
         const formattedNumber = fileNumber.toString().padStart(3, '0');
-        return `/assets/${this.folder}/${this.prefix}_${formattedNumber}.png`;
+        // return `/assets/${this.folder}/${this.prefix}_${formattedNumber}.png`;
+        return `/assets/${this.folder}/${this.prefix}${formattedNumber}.png`;
     }
 
     async move(direction) {

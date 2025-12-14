@@ -11,7 +11,8 @@ import { BackgroundManager } from "./background";
   // 2. Konfiguracja Background Managera
   // Zakładamy, że pliki są w: /public/assets/backgrounds/
   // I nazywają się: tlo_001.png, tlo_002.png itd.
-  const bgManager = new BackgroundManager(app, "backgrounds", "tlo", {
+  // const bgManager = new BackgroundManager(app, "backgrounds", "tlo", {
+  const bgManager = new BackgroundManager(app, "backgrounds", "bcgdn", {
       onStartChange: () => {
           // Tutaj możesz np. wyłączyć przyciski na chwilę
           console.log("--> Rozpoczynam zmianę tła");
