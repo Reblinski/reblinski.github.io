@@ -5,6 +5,10 @@
     "extension": "png",
     "count": 18
   },
+  "offers": [
+    "place-01",
+    "place-02"
+  ],
   "ui": {
     "scrollerPrev": "prev.png",
     "scrollerNext": "next.png"

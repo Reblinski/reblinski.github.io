@@ -1,31 +1,28 @@
 import { Application, Assets, Sprite, Text, TextStyle } from "pixi.js";
 import { Scroller } from "./scroller";
 import { BackgroundManager } from "./background";
+import { OffersManager } from "./offers"; // Importujemy nową klasę
 
 (async () => {
-  // 1. WCZYTANIE KONFIGURACJI (Krok zerowy)
-  // Zanim zrobimy cokolwiek innego, pobieramy JSONa
+  // 1. Ładowanie Configu
   let config;
   try {
-    const response = await fetch('/assets/config.json');
-    if (!response.ok) throw new Error("Brak pliku config.json");
-    config = await response.json();
-    console.log("Konfiguracja załadowana:", config);
+      const response = await fetch('/assets/config.json');
+      if (!response.ok) throw new Error("Brak pliku config.json");
+      config = await response.json();
   } catch (err) {
-    console.error("Błąd krytyczny: Nie można załadować konfiguracji!", err);
-    return; // Zatrzymujemy aplikację, bo bez configu nie zadziała
+      console.error("Błąd konfiguracji:", err);
+      return;
   }
 
-  // 2. Start aplikacji Pixi
   const app = new Application();
   await app.init({ background: "#1099bb", resizeTo: window });
   document.getElementById("pixi-container").appendChild(app.canvas);
 
   // --- UI TEKSTOWE ---
   const style = new TextStyle({
-    fontFamily: 'Arial', fontSize: 24, fill: '#ffffff',
-    stroke: '#000000', strokeThickness: 4,
-    dropShadow: true, dropShadowBlur: 4
+      fontFamily: 'Arial', fontSize: 24, fill: '#ffffff',
+      stroke: '#000000', strokeThickness: 4, dropShadow: true, dropShadowBlur: 4
   });
   const counterText = new Text({ text: "...", style });
   counterText.anchor.set(0.5);
@@ -33,32 +30,36 @@ import { BackgroundManager } from "./background";
   counterText.zIndex = 20;
   app.stage.addChild(counterText);
 
-  // --- TWORZENIE BACKGROUND MANAGERA ---
-  // Przekazujemy mu tylko sekcję "backgrounds" z naszego JSONa!
+
+  // --- 2. INICJALIZACJA MANAGERA OFERT ---
+  // Przekazujemy tablicę nazw folderów z configu (np. ["butelka", "szklanka"])
+  // Jeśli w configu nie ma sekcji offers, przekazujemy pustą tablicę []
+  const offersList = config.offers || [];
+  const offersManager = new OffersManager(app, offersList);
+
+
+  // --- 3. MANAGER TŁA Z PODPIĘCIEM OFERT ---
   const bgManager = new BackgroundManager(app, config.backgrounds, {
-    onStartChange: () => { },
-    onFinishChange: (idx) => {
-      // Korzystamy z danych z configu, które manager ma w sobie
-      counterText.text = `${idx + 1} / ${bgManager.totalImages}`;
-    }
+      onStartChange: () => {
+          // Gdy tło zaczyna się zmieniać, usuwamy stare oferty
+          offersManager.hide();
+          counterText.text = ""; // Opcjonalnie czyścimy tekst
+      },
+      onFinishChange: (idx) => {
+          counterText.text = `${idx + 1} / ${bgManager.totalImages}`;
+
+          // Gdy tło jest gotowe, ładujemy oferty dla tego indeksu
+          // Przekazujemy też sprite tła (bgManager.sprite), żeby policzyć współrzędne
+          offersManager.loadForIndex(idx, bgManager.sprite);
+      }
   });
+
 
   // --- SCROLLER ---
   const scroller = new Scroller(app, {
-    onPrevClick: () => bgManager.move(-1),
-    onNextClick: () => bgManager.move(1)
+      onPrevClick: () => bgManager.move(-1),
+      onNextClick: () => bgManager.move(1)
   });
-  /*
-    // --- BUNNY ---
-    const texture = await Assets.load("/assets/bunny.png");
-    const bunny = new Sprite(texture);
-    bunny.anchor.set(0.5);
-    bunny.position.set(app.screen.width / 2, app.screen.height / 2);
-    bunny.zIndex = 10;
-    app.stage.addChild(bunny);
 
-    app.ticker.add((time) => {
-      bunny.rotation += 0.1 * time.deltaTime;
-    });
-  */
+
 })();
