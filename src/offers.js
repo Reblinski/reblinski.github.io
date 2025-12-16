@@ -68,7 +68,7 @@ export class OffersManager {
     }
 
     async loadOneOffer(offerName, indexSuffix) {
-        const txtPath = `/assets/offers/${offerName}/${offerName}_${indexSuffix}.txt`;
+        const txtPath = `/assets/offers/${offerName}/${offerName}_${indexSuffix}.json`;
         try {
             const response = await fetch(txtPath);
             if (!response.ok) return;
