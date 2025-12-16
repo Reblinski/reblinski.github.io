@@ -10,20 +10,8 @@ import { OffersManager } from "./offers";
     } catch (err) { return; }
 
     const app = new Application();
-    await app.init({ background: "#1099bb", resizeTo: window });
+    await app.init({ background: "#000000", resizeTo: window });
     document.getElementById("pixi-container").appendChild(app.canvas);
-
-
-    window.addEventListener('resize', () => {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        app.renderer.resize(w, h);
-        // przesunąć sprite do środka ponownie, jeśli trzeba:
-        if (app.stage.children[0]) {
-            const spr = app.stage.children[0];
-            spr.position.set(app.screen.width / 2, app.screen.height / 2);
-        }
-    });
 
 
 
@@ -94,7 +82,26 @@ import { OffersManager } from "./offers";
         resizeCallbacks.forEach(fn => fn());
     };
 
-    window.addEventListener('resize', forceResizeAll);
+    // window.addEventListener('resize', forceResizeAll);
+    // forceResizeAll();
+    let resizeTimeout;
+
+    window.addEventListener('resize', () => {
+        // 1. Reakcja natychmiastowa (dla płynnego przeciągania krawędzi okna myszką)
+        forceResizeAll();
+
+        // 2. Reakcja opóźniona (dla przycisku "Maksymalizuj")
+        // Czekamy 200ms aż przeglądarka i Pixi "ochłoną" po zmianie rozmiaru
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            // Wymuszamy odświeżenie rozmiaru renderera Pixi, żeby mieć pewność
+            app.renderer.resize(window.innerWidth, window.innerHeight);
+            forceResizeAll();
+        // }, 200);
+        }, 50);
+    });
+
+    // Wywołujemy raz na start
     forceResizeAll();
 
 })();
