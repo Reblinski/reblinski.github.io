@@ -2,6 +2,7 @@ import { Application, Assets, Sprite, Text, TextStyle } from "pixi.js";
 import { Scroller } from "./scroller";
 import { BackgroundManager } from "./background";
 import { OffersManager } from "./offers";
+import { ContoursManager } from "./contours"; // [1] IMPORT
 
 (async () => {
     let config;
@@ -13,31 +14,38 @@ import { OffersManager } from "./offers";
     await app.init({ background: "#000000", resizeTo: window });
     document.getElementById("pixi-container").appendChild(app.canvas);
 
-
-
     // --- UI TEKSTOWE ---
     const style = new TextStyle({
         fontFamily: 'Arial', fontSize: 24, fill: '#ffffff',
         stroke: '#000000', strokeThickness: 4
     });
     const counterText = new Text({ text: "...", style });
-
-    // Tekst też centrujemy względem środka (anchor 0.5)
     counterText.anchor.set(0.5);
     counterText.zIndex = 20;
     app.stage.addChild(counterText);
 
     // --- MANAGERY ---
-    const offersManager = new OffersManager(app, config.offers || []);
+    // Pobieramy listę ofert z configu (np. ["place-01", "place-02"])
+    const offersList = config.offers || [];
+
+    const offersManager = new OffersManager(app, offersList);
+    const contoursManager = new ContoursManager(app, offersList); // [2] INICJALIZACJA
 
     const bgManager = new BackgroundManager(app, config.backgrounds, {
         onStartChange: () => {
             offersManager.hide();
+            contoursManager.hide(); // [3] UKRYWANIE PRZY ZMIANIE
             counterText.text = "";
         },
         onFinishChange: (idx) => {
             counterText.text = `${idx + 1} / ${bgManager.totalImages}`;
-            offersManager.loadForIndex(idx).then(() => {
+
+            // [4] ŁADOWANIE NOWYCH DANYCH
+            // Uruchamiamy ładowanie ofert i konturów równolegle
+            Promise.all([
+                offersManager.loadForIndex(idx),
+                contoursManager.loadForIndex(idx)
+            ]).then(() => {
                 forceResizeAll();
             });
         }
@@ -54,10 +62,10 @@ import { OffersManager } from "./offers";
     // ============================================================
 
     const resizeCallbacks = [
-        // 1. Tło: BackgroundManager ma w sobie this.sprite.position.set(screenW/2, ...)
+        // 1. Tło
         () => bgManager.resize(),
 
-        // 2. Oferty: Ustawiamy kontener na środku, ale pivotem korygujemy o połowę tła
+        // 2. Oferty (strefy klikalne)
         () => {
             const screenW = app.screen.width;
             const screenH = app.screen.height;
@@ -67,14 +75,23 @@ import { OffersManager } from "./offers";
             offersManager.reposition(screenW, screenH, bgW, bgH);
         },
 
-        // 3. Scroller: (Zostawiamy jak jest, bo on trzyma się krawędzi, a nie środka)
+        // 3. Kontury (grafiki PNG) - [5] DODANIE DO RESIZE
+        () => {
+            const screenW = app.screen.width;
+            const screenH = app.screen.height;
+            // Używamy wymiarów tła, żeby kontury idealnie się pokrywały
+            const bgW = bgManager.sprite.width;
+            const bgH = bgManager.sprite.height;
+
+            contoursManager.reposition(screenW, screenH, bgW, bgH);
+        },
+
+        // 4. Scroller
         () => scroller.resize(),
 
-        // 4. Elementy luźne: Ustawiamy je sztywno na środek ekranu
+        // 5. Elementy luźne
         () => {
-            // Tekst na dole, ale wycentrowany w poziomie
             counterText.position.set(app.screen.width / 2, app.screen.height - 50);
-
         }
     ];
 
@@ -82,26 +99,17 @@ import { OffersManager } from "./offers";
         resizeCallbacks.forEach(fn => fn());
     };
 
-    // window.addEventListener('resize', forceResizeAll);
-    // forceResizeAll();
     let resizeTimeout;
 
     window.addEventListener('resize', () => {
-        // 1. Reakcja natychmiastowa (dla płynnego przeciągania krawędzi okna myszką)
         forceResizeAll();
-
-        // 2. Reakcja opóźniona (dla przycisku "Maksymalizuj")
-        // Czekamy 200ms aż przeglądarka i Pixi "ochłoną" po zmianie rozmiaru
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-            // Wymuszamy odświeżenie rozmiaru renderera Pixi, żeby mieć pewność
             app.renderer.resize(window.innerWidth, window.innerHeight);
             forceResizeAll();
-        // }, 200);
         }, 50);
     });
 
-    // Wywołujemy raz na start
     forceResizeAll();
 
 })();
