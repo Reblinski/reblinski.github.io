@@ -81,7 +81,7 @@ export class OffersManager {
         const graphics = new Graphics();
         graphics.beginPath();
         graphics.poly(coords);
-        graphics.fill({ color: 0x00FF00, alpha: 0.5 }); // Alpha 0.5 dla testów
+        graphics.fill({ color: 0x00FF00, alpha: 0.05 }); // Alpha 0.5 dla testów
         graphics.eventMode = 'static';
         graphics.cursor = 'pointer';
 
@@ -101,7 +101,8 @@ export class OffersManager {
         overlay.on('pointertap', () => this.popupContainer.removeChildren());
         this.popupContainer.addChild(overlay);
 
-        const imagePath = `/assets/offers/${offerName}/${offerName}.png`;
+        // const imagePath = `/assets/offers/${offerName}/${offerName}.png`;
+        const imagePath = `/assets/offers/${offerName}/${offerName}.jpg`;
         try {
             const texture = await Assets.load(imagePath);
             const sprite = new Sprite(texture);

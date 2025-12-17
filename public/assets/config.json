@@ -1,7 +1,7 @@
 {
   "backgrounds": {
     "folder": "backgrounds",
-    "prefix": "bcgdn",
+    "prefix": "bg",
     "extension": "png",
     "count": 18
   },
