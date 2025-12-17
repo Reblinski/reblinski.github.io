@@ -62,7 +62,7 @@ export class ContoursManager {
             this.container.addChild(sprite);
         } catch (err) {
             // Ignorujemy błędy - brak pliku oznacza po prostu brak konturu dla danego tła
-            // console.warn(`Brak konturu: ${imagePath}`);
+            console.warn(`Brak konturu: ${imagePath}`);
         }
     }
 }
