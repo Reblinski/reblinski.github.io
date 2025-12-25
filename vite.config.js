@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: '/', // Bardzo ważne dla reblinski.github.io
+  base: "/", // Bardzo ważne dla reblinski.github.io
   build: {
-    outDir: 'dist',
-  }
-})
+    outDir: "dist",
+  },
+});
