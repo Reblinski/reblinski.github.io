@@ -7,7 +7,7 @@ import { ContoursManager } from "./contours"; // [1] IMPORT
 (async () => {
   let config;
   try {
-    config = await (await fetch("/assets/config.json")).json();
+    config = await (await fetch("assets/config.json")).json();
   } catch (err) {
     console.warn(`Błąd: ${err}`);
     return;
