@@ -2,7 +2,7 @@ name: Deploy PixiJS App
 
 on:
   push:
-    branches: [ "main" ] # Uruchom przy każdym pushu do main
+    branches: [ "main" ]
 
 permissions:
   contents: read
@@ -11,13 +11,18 @@ permissions:
 
 jobs:
   build-and-deploy:
+    # Definiujemy środowisko, do którego trafiają pliki
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/checkout@v4
+        uses: actions/node-js@v4
         with:
           node-version: 20
 
@@ -30,7 +35,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist # Wskazujemy folder, który wygenerował Vite
+          path: ./dist
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
