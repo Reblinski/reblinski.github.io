@@ -1,0 +1,36 @@
+name: Deploy PixiJS App
+
+on:
+  push:
+    branches: [ "main" ] # Uruchom przy każdym pushu do main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/checkout@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist # Wskazujemy folder, który wygenerował Vite
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
